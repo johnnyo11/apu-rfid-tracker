@@ -1,0 +1,6 @@
+import type { Location } from "@/types/database";
+
+export default function LocationCard({ location }: { location: Location }) {
+  const count = location.equipment.length;
+  return <article className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"><div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold uppercase tracking-wide text-blue-600">{location.type?.replaceAll("_", " ") ?? "Location"}</p><h2 className="mt-1 text-lg font-bold text-slate-900">{location.name}</h2></div><span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">{count} {count === 1 ? "item" : "items"}</span></div><dl className="mt-5 space-y-3 text-sm"><div className="flex justify-between gap-4"><dt className="text-slate-500">Block</dt><dd className="font-medium text-slate-800">{location.block || "Not specified"}</dd></div><div className="flex justify-between gap-4 border-t border-slate-100 pt-3"><dt className="text-slate-500">Level</dt><dd className="font-medium text-slate-800">{location.level ?? "Not specified"}</dd></div><div className="flex justify-between gap-4 border-t border-slate-100 pt-3"><dt className="text-slate-500">Details</dt><dd className="max-w-56 text-right font-medium text-slate-800">{location.location_detail || "No details"}</dd></div></dl></article>;
+}

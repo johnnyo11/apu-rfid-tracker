@@ -1,65 +1,22 @@
-import Image from "next/image";
+import Link from "next/link";
+import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+export const dynamic = "force-dynamic";
+const label = (value: string) => value.replaceAll("_", " ");
+
+export default async function DashboardPage() {
+  if (!isSupabaseConfigured || !supabase) return <main className="min-h-screen bg-slate-50 px-6 py-10"><div className="mx-auto max-w-6xl"><h1 className="text-3xl font-bold text-slate-900">Dashboard</h1><p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-900">Configure Supabase to view the dashboard.</p></div></main>;
+  const [equipmentResult, locationsResult, usersResult] = await Promise.all([
+    supabase.from("equipment").select("id, code, subcategory, status, current_condition, is_tagged, location:locations(name)").order("code"),
+    supabase.from("locations").select("id", { count: "exact", head: true }),
+    supabase.from("part_timer").select("id", { count: "exact", head: true }),
+  ]);
+  if (equipmentResult.error) throw new Error(`Could not load dashboard: ${equipmentResult.error.message}`);
+  const equipment = equipmentResult.data ?? [];
+  const available = equipment.filter((item) => item.status === "available").length;
+  const deployed = equipment.filter((item) => ["deployed", "checked_out"].includes(item.status)).length;
+  const attention = equipment.filter((item) => ["maintenance", "lost"].includes(item.status) || ["damaged", "unusable"].includes(item.current_condition) || !item.is_tagged);
+  const metrics = [["Total equipment", equipment.length, "All tracked items", "/equipment"], ["Available", available, "Ready to use", "/equipment"], ["Deployed", deployed, "Currently in use", "/equipment"], ["Needs attention", attention.length, "Review these first", "#attention"]] as const;
+
+  return <main className="min-h-screen bg-slate-50 px-5 py-8 sm:px-6 sm:py-10"><div className="mx-auto max-w-6xl"><header><p className="text-sm font-semibold uppercase tracking-wider text-blue-600">AV inventory management</p><h1 className="mt-2 text-3xl font-bold text-slate-900">Dashboard</h1><p className="mt-2 text-slate-600">See what is ready, what is deployed, and what needs attention.</p></header><section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{metrics.map(([name, value, detail, href]) => <Link key={name} href={href} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500"><p className="text-sm font-medium text-slate-500">{name}</p><p className="mt-2 text-3xl font-bold text-slate-900">{value}</p><p className="mt-1 text-xs text-slate-400">{detail}</p></Link>)}</section><div className="mt-8 grid gap-6 lg:grid-cols-[1.6fr_1fr]"><section id="attention" className="rounded-xl border border-slate-200 bg-white shadow-sm"><div className="flex items-center justify-between border-b border-slate-200 px-5 py-4"><div><h2 className="font-bold text-slate-900">Needs attention</h2><p className="mt-1 text-sm text-slate-500">Damaged, unavailable, lost, or untagged</p></div><Link href="/equipment" className="text-sm font-semibold text-blue-600">View all</Link></div>{attention.length ? <div className="divide-y divide-slate-100">{attention.slice(0, 6).map((item) => { const location = Array.isArray(item.location) ? item.location[0] : item.location; return <div key={item.id} className="flex items-center justify-between gap-4 px-5 py-4"><div className="min-w-0"><p className="truncate font-semibold text-slate-900">{item.subcategory}</p><p className="mt-1 text-sm text-slate-500">{item.code} · {location?.name ?? "Not assigned"}</p></div><span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${item.current_condition === "damaged" || item.status === "maintenance" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"}`}>{!item.is_tagged ? "Not tagged" : label(item.current_condition)}</span></div>; })}</div> : <div className="p-8 text-center"><p className="font-semibold text-emerald-700">Everything looks ready</p><p className="mt-1 text-sm text-slate-500">No equipment currently needs attention.</p></div>}</section><aside className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"><h2 className="font-bold text-slate-900">Quick access</h2><p className="mt-1 text-sm text-slate-500">The three places you will use most.</p><nav className="mt-5 space-y-3">{[["/equipment", "Equipment", `${equipment.length} tracked items`], ["/locations", "Locations", `${locationsResult.count ?? 0} saved locations`], ["/part_timer", "Part-timers", `${usersResult.count ?? 0} team members`]].map(([href, name, detail]) => <Link key={href} href={href} className="flex items-center justify-between rounded-lg border border-slate-200 p-4 transition hover:border-blue-300 hover:bg-blue-50"><span><span className="block font-semibold text-slate-900">{name}</span><span className="mt-0.5 block text-sm text-slate-500">{detail}</span></span><span className="text-xl text-blue-600" aria-hidden="true">→</span></Link>)}</nav></aside></div></div></main>;
 }
