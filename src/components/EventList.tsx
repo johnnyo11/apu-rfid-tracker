@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import type { Event } from "@/types/database";
 import StatusToast from "@/components/StatusToast";
+import EventDetailsPanel from "@/components/EventDetailsPanel";
 
 const statusStyles: Record<string, string> = {
   planned: "bg-slate-100 text-slate-700",
@@ -169,7 +170,7 @@ function FulfilmentButton({ event }: { event: Event }) {
   );
 }
 
-function EventCard({ event }: { event: Event }) {
+function EventCard({ event, onView }: { event: Event; onView: (event: Event) => void }) {
   const progress = eventProgress(event);
   const locations = locationNames(event);
   const team = responsibleNames(event);
@@ -221,7 +222,8 @@ function EventCard({ event }: { event: Event }) {
           </div>
         </div>
       </dl>
-      <div className="mt-4 flex justify-end border-t border-slate-100 pt-4">
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-100 pt-4">
+        <button type="button" onClick={() => onView(event)} className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">View details</button>
         <FulfilmentButton event={event} />
       </div>
     </article>
@@ -232,6 +234,7 @@ export default function EventList({ events }: { events: Event[] }) {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
   const [period, setPeriod] = useState("upcoming");
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [now] = useState(() => Date.now());
   const statuses = useMemo(
     () => [...new Set(events.map((event) => event.status))].sort(),
@@ -334,7 +337,7 @@ export default function EventList({ events }: { events: Event[] }) {
         <>
           <div className="mt-4 grid gap-4 md:hidden">
             {results.map((event) => (
-              <EventCard key={event.id} event={event} />
+              <EventCard key={event.id} event={event} onView={setSelectedEvent} />
             ))}
           </div>
           <div className="mt-4 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
@@ -357,9 +360,9 @@ export default function EventList({ events }: { events: Event[] }) {
                     return (
                       <tr key={event.id} className="hover:bg-slate-50">
                         <td className="px-5 py-4">
-                          <span className="block font-semibold text-slate-900">
+                          <button type="button" onClick={() => setSelectedEvent(event)} className="block text-left font-semibold text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                             {event.event_name}
-                          </span>
+                          </button>
                           <span className="mt-0.5 block max-w-56 truncate text-xs text-slate-500">
                             {event.organizer_name || "No organizer"}
                           </span>
@@ -387,7 +390,10 @@ export default function EventList({ events }: { events: Event[] }) {
                           </span>
                         </td>
                         <td className="px-5 py-4">
-                          <FulfilmentButton event={event} />
+                          <div className="flex items-center justify-end gap-2">
+                            <button type="button" onClick={() => setSelectedEvent(event)} className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">Details</button>
+                            <FulfilmentButton event={event} />
+                          </div>
                         </td>
                       </tr>
                     );
@@ -405,6 +411,7 @@ export default function EventList({ events }: { events: Event[] }) {
           </p>
         </div>
       )}
+      {selectedEvent && <EventDetailsPanel event={selectedEvent} onClose={() => setSelectedEvent(null)} />}
     </section>
   );
 }

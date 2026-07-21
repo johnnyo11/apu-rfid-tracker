@@ -1,7 +1,9 @@
 import ScanActivityList from "@/components/ScanActivityList";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
+import { isManagerRole } from "@/lib/auth/roles";
 import type { ScanActivity } from "@/types/database";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,26 @@ export default async function ActivityPage() {
     );
   }
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login?next=/activity");
+
+  const { data: profile, error: profileError } = await supabase
+    .from("part_timer")
+    .select("role, status")
+    .eq("auth_user_id", user.id)
+    .maybeSingle();
+  if (profileError) {
+    throw new Error(`Could not verify activity access: ${profileError.message}`);
+  }
+  if (
+    !profile ||
+    String(profile.status ?? "").trim().toLowerCase() !== "active" ||
+    !isManagerRole(profile.role)
+  ) {
+    redirect("/operations?access=activity_denied");
+  }
 
   const { data, error } = await supabase
     .from("scan_logs")

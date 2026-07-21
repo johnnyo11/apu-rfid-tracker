@@ -44,15 +44,20 @@ export default async function OperationsPage({
         .eq("auth_user_id", user.id)
         .maybeSingle()
     : { data: null };
-  const canManageRfid = Boolean(
+  const canViewRestrictedOperations = Boolean(
     profile &&
       String(profile.status ?? "").trim().toLowerCase() === "active" &&
       isManagerRole(profile.role),
   );
   const visibleTools = tools.filter(
-    (tool) => tool.href !== "/rfid" || canManageRfid,
+    (tool) =>
+      !["/activity", "/rfid"].includes(tool.href) ||
+      canViewRestrictedOperations,
   );
-  const accessDenied = (await searchParams).access === "rfid_denied";
+  const access = (await searchParams).access;
+  const accessDenied = ["rfid_denied", "activity_denied"].includes(
+    access ?? "",
+  );
 
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-8 sm:px-6 sm:py-10">
@@ -68,8 +73,8 @@ export default async function OperationsPage({
 
         {accessDenied && (
           <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-            RFID tag assignments are restricted to active administrators and
-            quartermasters.
+            Activity logs and RFID tag assignments are restricted to active
+            administrators and quartermasters.
           </p>
         )}
 
