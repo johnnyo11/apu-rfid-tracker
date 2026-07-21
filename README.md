@@ -1,4 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# APU AV RFID Inventory
+
+Next.js and Supabase inventory management for APU's Audio-Visual team.
+
+## ESP32 + RC522 scan integration
+
+The ESP32 sends only the scanned tag UID to `POST /api/rfid/scan`. The server
+matches it to `rfid_tags`, determines the next movement, and writes to
+`scan_logs`. A scan after `checked_out` becomes `checked_in`; otherwise it
+becomes `checked_out`. Repeated reads within three seconds are ignored.
+
+Add these server-only values to `.env.local` and to Vercel:
+
+```text
+SUPABASE_SECRET_KEY=your-supabase-secret-key
+RFID_DEVICE_SECRET=a-long-random-device-secret
+```
+
+Never prefix these values with `NEXT_PUBLIC_` and never put the Supabase secret
+key on the ESP32. Only `RFID_DEVICE_SECRET` is copied into the device sketch.
+Restart the development server after changing `.env.local`.
+
+Configure `hardware/esp32_rc522/esp32_rc522.ino` with the Wi-Fi credentials,
+API URL, and matching device secret. Install the Arduino `MFRC522` library before
+uploading. For local testing, use the computer's LAN IP instead of `localhost`.
+The computer and ESP32 must be on the same network, and the firewall must allow
+the development server's port.
+
+The endpoint expects `rfid_tags.tag_uid`, `tagged_id`,
+`assigned_equipment_id`, and `status`, plus `scan_logs.rfid_tag_id`,
+`movement_type`, and `scanned_at`.
+
+RC522 UID bytes are represented as uppercase hexadecimal text such as
+`A1B2C3D4`. Hex does not change the UID; it is a readable representation of the
+same bytes.
 
 ## Getting Started
 

@@ -6,9 +6,12 @@ type EquipmentCardProps = {
 
 const statusStyles: Record<string, string> = {
   available: "bg-emerald-100 text-emerald-700",
+  reserved: "bg-blue-100 text-blue-700",
+  in_use: "bg-amber-100 text-amber-800",
   checked_out: "bg-amber-100 text-amber-700",
   deployed: "bg-blue-100 text-blue-700",
-  maintenance: "bg-red-100 text-red-700",
+  inspection_required: "bg-red-100 text-red-700",
+  under_maintenance: "bg-red-100 text-red-700",
   retired: "bg-slate-200 text-slate-700",
 };
 
@@ -69,6 +72,15 @@ export default function EquipmentCard({ equipment }: EquipmentCardProps) {
               className={`rounded-full px-3 py-1 text-xs font-semibold ${taggedClass}`}
             >
               {equipment.is_tagged ? "Tagged" : "Not tagged"}
+            </span>
+          </dd>
+        </div>
+        <div className="flex justify-between gap-4 border-t border-slate-100 pt-3">
+          <dt className="text-slate-500">Estimated use</dt>
+          <dd className="text-right font-medium text-slate-800">
+            {equipment.estimated_operating_hours.toFixed(1)} hours
+            <span className={`mt-1 block text-xs capitalize ${equipment.maintenance_state === "inspection_due" ? "text-red-700" : equipment.maintenance_state === "inspection_soon" ? "text-amber-700" : "text-slate-500"}`}>
+              {formatLabel(equipment.maintenance_state)}
             </span>
           </dd>
         </div>

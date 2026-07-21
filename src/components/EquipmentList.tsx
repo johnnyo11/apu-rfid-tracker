@@ -6,9 +6,12 @@ import type { Equipment } from "@/types/database";
 
 const statusStyles: Record<string, string> = {
   available: "bg-emerald-100 text-emerald-700",
+  reserved: "bg-blue-100 text-blue-700",
+  in_use: "bg-amber-100 text-amber-800",
   checked_out: "bg-amber-100 text-amber-700",
   deployed: "bg-blue-100 text-blue-700",
-  maintenance: "bg-red-100 text-red-700",
+  inspection_required: "bg-red-100 text-red-700",
+  under_maintenance: "bg-red-100 text-red-700",
   retired: "bg-slate-200 text-slate-700",
 };
 
@@ -44,13 +47,17 @@ export default function EquipmentList({ equipment }: { equipment: Equipment[] })
   const counts = {
     total: equipment.length,
     available: equipment.filter((item) => item.status === "available").length,
-    deployed: equipment.filter((item) => ["deployed", "checked_out"].includes(item.status)).length,
-    maintenance: equipment.filter((item) => item.status === "maintenance").length,
+    reserved: equipment.filter((item) => item.status === "reserved").length,
+    in_use: equipment.filter((item) => ["in_use", "deployed", "checked_out"].includes(item.status)).length,
+    maintenance: equipment.filter((item) =>
+      item.maintenance_state !== "normal" ||
+      ["inspection_required", "under_maintenance"].includes(item.status)
+    ).length,
   };
 
   return (
     <section className="mt-8">
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {Object.entries(counts).map(([label, value]) => <div key={label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p className="text-sm capitalize text-slate-500">{label}</p><p className="mt-1 text-2xl font-bold text-slate-900">{value}</p></div>)}
       </div>
       <div className="mt-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -70,9 +77,9 @@ export default function EquipmentList({ equipment }: { equipment: Equipment[] })
         <div className="mt-6 hidden overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm md:block">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] text-left text-sm">
-              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th scope="col" className="px-5 py-3">Code</th><th scope="col" className="px-5 py-3">Equipment</th><th scope="col" className="px-5 py-3">Status</th><th scope="col" className="px-5 py-3">Condition</th><th scope="col" className="px-5 py-3">Location</th><th scope="col" className="px-5 py-3">RFID</th></tr></thead>
+              <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th scope="col" className="px-5 py-3">Code</th><th scope="col" className="px-5 py-3">Equipment</th><th scope="col" className="px-5 py-3">Status</th><th scope="col" className="px-5 py-3">Condition</th><th scope="col" className="px-5 py-3">Location</th><th scope="col" className="px-5 py-3">Lifecycle</th><th scope="col" className="px-5 py-3">RFID</th></tr></thead>
               <tbody className="divide-y divide-slate-100">
-                {results.map((item) => <tr key={item.id} className="transition-colors hover:bg-slate-50"><td className="whitespace-nowrap px-5 py-4 font-semibold text-blue-600">{item.code}</td><td className="px-5 py-4"><span className="block font-semibold text-slate-900">{item.subcategory}</span><span className="mt-0.5 block text-xs text-slate-500">{item.category}{item.brand ? ` · ${item.brand}` : ""}</span></td><td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusStyles[item.status] ?? "bg-slate-100 text-slate-700"}`}>{label(item.status)}</span></td><td className="px-5 py-4 capitalize text-slate-700">{label(item.current_condition)}</td><td className="px-5 py-4 text-slate-700">{item.location?.name ?? "Not assigned"}</td><td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${item.is_tagged ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}>{item.is_tagged ? "Tagged" : "Not tagged"}</span></td></tr>)}
+                {results.map((item) => <tr key={item.id} className="transition-colors hover:bg-slate-50"><td className="whitespace-nowrap px-5 py-4 font-semibold text-blue-600">{item.code}</td><td className="px-5 py-4"><span className="block font-semibold text-slate-900">{item.subcategory}</span><span className="mt-0.5 block text-xs text-slate-500">{item.category}{item.brand ? ` · ${item.brand}` : ""}</span></td><td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${statusStyles[item.status] ?? "bg-slate-100 text-slate-700"}`}>{label(item.status)}</span></td><td className="px-5 py-4 capitalize text-slate-700">{label(item.current_condition)}</td><td className="px-5 py-4 text-slate-700">{item.location?.name ?? "Not assigned"}</td><td className="px-5 py-4"><span className={`block font-medium ${item.maintenance_state === "inspection_due" ? "text-red-700" : item.maintenance_state === "inspection_soon" ? "text-amber-700" : "text-slate-700"}`}>{item.estimated_operating_hours.toFixed(1)} hours</span><span className="mt-0.5 block text-xs capitalize text-slate-500">{label(item.maintenance_state)}</span></td><td className="px-5 py-4"><span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${item.is_tagged ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-600"}`}>{item.is_tagged ? "Tagged" : "Not tagged"}</span></td></tr>)}
               </tbody>
             </table>
           </div>

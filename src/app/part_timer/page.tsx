@@ -1,11 +1,13 @@
 import PartTimerList from "@/app/part_timer/PartTimerList";
-import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createClient } from "@/lib/supabase/server";
 import type { User } from "@/types/database";
 
 export const dynamic = "force-dynamic";
 
 export default async function PartTimerPage() {
-  if (!isSupabaseConfigured || !supabase) return <main className="min-h-screen bg-slate-50 px-6 py-10"><div className="mx-auto max-w-5xl"><h1 className="text-3xl font-bold text-slate-900">Users</h1><p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-900">Add the Supabase environment variables, then restart the development server.</p></div></main>;
+  if (!isSupabaseConfigured) return <main className="min-h-screen bg-slate-50 px-6 py-10"><div className="mx-auto max-w-5xl"><h1 className="text-3xl font-bold text-slate-900">Users</h1><p className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-900">Add the Supabase environment variables, then restart the development server.</p></div></main>;
+  const supabase = await createClient();
   const { data, error } = await supabase
     .from("part_timer")
     .select("id, student_id, date_of_birth, role, name, email, phone, status")

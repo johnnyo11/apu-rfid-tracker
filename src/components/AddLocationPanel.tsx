@@ -3,6 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import StatusToast from "@/components/StatusToast";
 
 export default function AddLocationPanel() {
   const router = useRouter();
@@ -12,8 +13,9 @@ export default function AddLocationPanel() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     if (!supabase) return setMessage({ type: "error", text: "Supabase is not configured." });
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     const name = String(form.get("name") ?? "").trim();
     const type = String(form.get("type") ?? "").trim();
     const block = String(form.get("block") ?? "").trim();
@@ -33,7 +35,7 @@ export default function AddLocationPanel() {
     setIsSaving(false);
     if (error) return setMessage({ type: "error", text: error.message });
 
-    event.currentTarget.reset();
+    formElement.reset();
     setMessage({ type: "success", text: `${name} was added successfully.` });
     router.refresh();
   }
@@ -52,9 +54,9 @@ export default function AddLocationPanel() {
           <label className="text-sm font-medium text-slate-700">Level<input name="level" type="number" step="1" placeholder="e.g. 7" className="mt-1 block w-full rounded-lg border border-slate-300 px-3 py-2 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
           <label className="text-sm font-medium text-slate-700 sm:row-span-2">Location details<textarea name="location_detail" rows={3} placeholder="Stage box, storage shelf, access notes..." className="mt-1 block w-full resize-y rounded-lg border border-slate-300 px-3 py-2 font-normal outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" /></label>
         </div>
-        {message && <p role="status" className={`mt-4 rounded-lg p-3 text-sm ${message.type === "success" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>{message.text}</p>}
         <div className="mt-5 flex justify-end gap-3"><button type="button" onClick={() => setIsOpen(false)} className="rounded-lg px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-100">Cancel</button><button type="submit" disabled={isSaving} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60">{isSaving ? "Adding..." : "Add location"}</button></div>
       </form>}
+      {message && <StatusToast message={message.text} tone={message.type} onDismiss={() => setMessage(null)} />}
     </section>
   );
 }
