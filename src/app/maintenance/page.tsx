@@ -1,6 +1,7 @@
 import MaintenanceList from "@/components/MaintenanceList";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeStatus } from "@/lib/status";
 import type { MaintenanceActivity } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -50,7 +51,7 @@ export default async function MaintenancePage() {
 
   const logs: MaintenanceActivity[] = (logsResult.data ?? []).map((item) => ({
     ...item,
-    status: item.status ?? "reported",
+    status: normalizeStatus(item.status, "reported"),
     reported_at: item.reported_at ?? new Date(0).toISOString(),
     equipment: one(item.equipment),
   }));

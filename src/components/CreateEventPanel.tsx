@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import type { EventFormOption } from "@/types/database";
 import StatusToast from "@/components/StatusToast";
+import { EQUIPMENT_STATUS, EVENT_STATUS, normalizeStatus, USER_STATUS } from "@/lib/status";
 
 type Props = {
   locations: EventFormOption[];
@@ -87,12 +88,7 @@ export default function CreateEventPanel({
     setEquipmentOptions(
       (equipmentResult.data ?? [])
         .filter((item) => {
-          const status = String(item.status ?? "available")
-            .trim()
-            .toLowerCase()
-            .replaceAll(" ", "_")
-            .replaceAll("-", "_");
-          return status === "available";
+          return normalizeStatus(item.status, EQUIPMENT_STATUS.AVAILABLE) === EQUIPMENT_STATUS.AVAILABLE;
         })
         .map((item) => ({
           id: item.id,
@@ -104,7 +100,7 @@ export default function CreateEventPanel({
       (partTimerResult.data ?? [])
         .filter(
           (user) =>
-            String(user.status ?? "active").trim().toLowerCase() === "active",
+            normalizeStatus(user.status, USER_STATUS.ACTIVE) === USER_STATUS.ACTIVE,
         )
         .map((user) => ({
           id: user.id,
@@ -185,7 +181,7 @@ export default function CreateEventPanel({
           String(form.get("organizer_contact") ?? "").trim() || null,
         start_at: new Date(startAt).toISOString(),
         end_at: endAt ? new Date(endAt).toISOString() : null,
-        status: "planned",
+        status: EVENT_STATUS.PLANNED,
         notes: String(form.get("notes") ?? "").trim() || null,
       })
       .select("id")
@@ -239,9 +235,9 @@ export default function CreateEventPanel({
       } else {
         const { data: reservedEquipment, error: reserveError } = await supabase
           .from("equipment")
-          .update({ status: "reserved", updated_at: new Date().toISOString() })
+          .update({ status: EQUIPMENT_STATUS.RESERVED, updated_at: new Date().toISOString() })
           .in("id", selectedEquipment)
-          .ilike("status", "available")
+          .eq("status", EQUIPMENT_STATUS.AVAILABLE)
           .select("id");
 
         if (reserveError || reservedEquipment?.length !== selectedEquipment.length) {
@@ -254,9 +250,9 @@ export default function CreateEventPanel({
           if (reservedIds.length) {
             await supabase
               .from("equipment")
-              .update({ status: "available", updated_at: new Date().toISOString() })
+              .update({ status: EQUIPMENT_STATUS.AVAILABLE, updated_at: new Date().toISOString() })
               .in("id", reservedIds)
-              .eq("status", "reserved");
+              .eq("status", EQUIPMENT_STATUS.RESERVED);
           }
           assignmentErrors.push(
             `equipment reservation: ${reserveError?.message ?? "one or more items are no longer available"}`,

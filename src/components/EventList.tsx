@@ -6,11 +6,12 @@ import { supabase } from "@/lib/supabaseClient";
 import type { Event } from "@/types/database";
 import StatusToast from "@/components/StatusToast";
 import EventDetailsPanel from "@/components/EventDetailsPanel";
+import { EQUIPMENT_STATUS, EVENT_STATUS } from "@/lib/status";
 
 const statusStyles: Record<string, string> = {
   planned: "bg-slate-100 text-slate-700",
   assigned: "bg-blue-100 text-blue-700",
-  partially_fulfilled: "bg-amber-100 text-amber-800",
+  "partially fulfilled": "bg-amber-100 text-amber-800",
   fulfilled: "bg-emerald-100 text-emerald-700",
   completed: "bg-emerald-100 text-emerald-700",
   cancelled: "bg-slate-200 text-slate-600",
@@ -31,7 +32,7 @@ function eventProgress(event: Event) {
     (item) => item.status !== "cancelled",
   ).length;
   const deployed = event.event_equipment.filter((item) =>
-    ["in_use", "deployed", "returned"].includes(item.status),
+    ["in use", "deployed", "returned"].includes(item.status),
   ).length;
   return { total, deployed, complete: total > 0 && deployed === total };
 }
@@ -58,7 +59,9 @@ function FulfilmentButton({ event }: { event: Event }) {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const alreadyConfirmed = ["fulfilled", "completed"].includes(event.status);
+  const alreadyConfirmed =
+    event.status === EVENT_STATUS.FULFILLED ||
+    event.status === EVENT_STATUS.COMPLETED;
   const readyToConfirm =
     event.event_equipment.length > 0 &&
     event.event_locations.length > 0 &&
@@ -70,7 +73,7 @@ function FulfilmentButton({ event }: { event: Event }) {
     setMessage(null);
     const { error, data } = await supabase
       .from("events")
-      .update({ status: "fulfilled", updated_at: new Date().toISOString() })
+      .update({ status: EVENT_STATUS.FULFILLED, updated_at: new Date().toISOString() })
       .eq("id", event.id)
       .not("status", "in", '("fulfilled","completed")')
       .select("id");
@@ -91,9 +94,9 @@ function FulfilmentButton({ event }: { event: Event }) {
       .filter((id): id is number => typeof id === "number");
     const { data: deployedEquipment, error: deploymentError } = await supabase
       .from("equipment")
-      .update({ status: "in_use", updated_at: new Date().toISOString() })
+      .update({ status: EQUIPMENT_STATUS.IN_USE, updated_at: new Date().toISOString() })
       .in("id", equipmentIds)
-      .in("status", ["reserved", "available", "in_use"])
+      .in("status", [EQUIPMENT_STATUS.RESERVED, EQUIPMENT_STATUS.AVAILABLE, EQUIPMENT_STATUS.IN_USE])
       .select("id");
     if (deploymentError || deployedEquipment?.length !== equipmentIds.length) {
       setSaving(false);

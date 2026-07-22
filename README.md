@@ -2,6 +2,13 @@
 
 Next.js and Supabase inventory management for APU's Audio-Visual team.
 
+## Stored status convention
+
+Status values are stored as lowercase words separated by spaces. Examples are
+`available`, `reserved`, `in use`, and `under maintenance`. Run
+`supabase/status_normalization.sql` once in the Supabase SQL Editor to convert
+legacy underscore values and enforce the allowed values.
+
 ## ESP32 + RC522 scan integration
 
 The ESP32 sends only the scanned tag UID to `POST /api/rfid/scan`. The server

@@ -1,6 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { EQUIPMENT_STATUS, RFID_STATUS } from "@/lib/status";
 
 export const runtime = "nodejs";
 
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
     .from("rfid_tags")
     .select("tagged_id, tag_code, assigned_equipment_id")
     .eq("tag_uid", uid)
-    .eq("status", "active")
+    .eq("status", RFID_STATUS.ACTIVE)
     .maybeSingle();
 
   if (tagError) {
@@ -149,7 +150,9 @@ export async function POST(request: Request) {
   }
 
   const nextEquipmentStatus =
-    movementType === "checked_out" ? "in_use" : "available";
+    movementType === "checked_out"
+      ? EQUIPMENT_STATUS.IN_USE
+      : EQUIPMENT_STATUS.AVAILABLE;
   const { data: updatedEquipment, error: equipmentStatusError } = await supabase
     .from("equipment")
     .update({
@@ -157,7 +160,11 @@ export async function POST(request: Request) {
       updated_at: now.toISOString(),
     })
     .eq("id", tag.assigned_equipment_id)
-    .not("status", "in", '("under_maintenance","retired","damaged")')
+    .not(
+      "status",
+      "in",
+      `("${EQUIPMENT_STATUS.UNDER_MAINTENANCE}","${EQUIPMENT_STATUS.RETIRED}")`,
+    )
     .select("id");
 
   if (equipmentStatusError) {

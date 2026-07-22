@@ -152,7 +152,6 @@ export default function LoginPage() {
           </button>
           </form>
 
-
           <p className="mt-6 text-center text-xs leading-5 text-slate-500">
             Contact the admin or quartermaster if you need an account or cannot
             access the system.

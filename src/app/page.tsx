@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeStatus } from "@/lib/status";
 
 export const dynamic = "force-dynamic";
 const label = (value: string) => value.replaceAll("_", " ");
@@ -9,7 +10,7 @@ const MALAYSIA_OFFSET_MS = 8 * 60 * 60 * 1000;
 const eventStatusStyles: Record<string, string> = {
   planned: "bg-slate-100 text-slate-700",
   assigned: "bg-blue-100 text-blue-700",
-  partially_fulfilled: "bg-amber-100 text-amber-800",
+  "partially fulfilled": "bg-amber-100 text-amber-800",
   fulfilled: "bg-emerald-100 text-emerald-700",
   completed: "bg-emerald-100 text-emerald-700",
 };
@@ -90,7 +91,7 @@ export default async function DashboardPage() {
     ...item,
     code: item.code ?? `EQ-${item.id}`,
     subcategory: item.subcategory ?? "Equipment",
-    status: item.status ?? "available",
+    status: normalizeStatus(item.status, "available"),
     current_condition: item.current_condition ?? "not_inspected",
     is_tagged: item.rfid_tags.some((tag) => tag.status === "active"),
     estimated_hours: Number(item.total_hours_used ?? 0),
@@ -99,11 +100,11 @@ export default async function DashboardPage() {
     (item) => item.status === "available",
   ).length;
   const inUse = equipment.filter((item) =>
-    ["in_use", "deployed", "checked_out"].includes(item.status),
+    ["in use", "deployed", "checked out"].includes(item.status),
   ).length;
   const attention = equipment.filter(
     (item) =>
-      ["inspection_required", "under_maintenance", "lost"].includes(
+      ["inspection required", "under maintenance", "lost"].includes(
         item.status,
       ) ||
       ["damaged", "unusable"].includes(item.current_condition) ||
@@ -119,7 +120,11 @@ export default async function DashboardPage() {
   ] as const;
   const now = new Date();
   const todayBounds = malaysiaDayBounds(now);
-  const activeEvents = (eventsResult.data ?? []).filter((event) => {
+  const dashboardEvents = (eventsResult.data ?? []).map((event) => ({
+    ...event,
+    status: normalizeStatus(event.status, "planned"),
+  }));
+  const activeEvents = dashboardEvents.filter((event) => {
     const eventEnd = new Date(event.end_at ?? event.start_at).getTime();
     return eventEnd >= todayBounds.start.getTime();
   });
@@ -308,7 +313,7 @@ export default async function DashboardPage() {
                   );
                   const serious =
                     item.current_condition === "damaged" ||
-                    ["inspection_required", "under_maintenance"].includes(
+                    ["inspection required", "under maintenance"].includes(
                       item.status,
                     );
                   return (

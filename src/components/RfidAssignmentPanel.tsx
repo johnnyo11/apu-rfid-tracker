@@ -8,6 +8,7 @@ import type {
   EventFormOption,
   RfidAssignment,
 } from "@/types/database";
+import { RFID_STATUS } from "@/lib/status";
 
 function normalizeUid(value: string) {
   return value.replace(/[^0-9a-f]/gi, "").toUpperCase();
@@ -79,7 +80,7 @@ export default function RfidAssignmentPanel({
     }
 
     const activeAssignment = assignments.find(
-      (item) => item.equipment?.id === equipmentId && item.status === "active",
+      (item) => item.equipment?.id === equipmentId && item.status === RFID_STATUS.ACTIVE,
     );
     if (activeAssignment) {
       setSaving(false);
@@ -94,7 +95,7 @@ export default function RfidAssignmentPanel({
       tag_code: tagCode,
       tag_uid: uid,
       assigned_equipment_id: equipmentId,
-      status: "active",
+      status: RFID_STATUS.ACTIVE,
     });
     setSaving(false);
     if (error) {

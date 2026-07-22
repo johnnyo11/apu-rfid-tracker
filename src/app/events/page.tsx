@@ -2,6 +2,7 @@ import EventList from "@/components/EventList";
 import CreateEventPanel from "@/components/CreateEventPanel";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeStatus } from "@/lib/status";
 import type {
   Event,
   EventEquipment,
@@ -117,11 +118,11 @@ export default async function EventsPage() {
     const eventLocation = one(row.event_location);
     const event = (eventsResult.data ?? []).find((item) => item.id === row.event_id);
     const isFulfilled = event
-      ? ["fulfilled", "completed"].includes(event.status)
+      ? ["fulfilled", "completed"].includes(normalizeStatus(event.status))
       : false;
     equipment.push({
       id: row.equipment_id,
-      status: isFulfilled ? "in_use" : "reserved",
+      status: isFulfilled ? "in use" : "reserved",
       deployed_at: null,
       equipment: one(row.equipment),
       event_location: eventLocation
@@ -137,6 +138,7 @@ export default async function EventsPage() {
 
   const events: Event[] = (eventsResult.data ?? []).map((event) => ({
     ...event,
+    status: normalizeStatus(event.status, "planned"),
     responsible_users: responsibleByEvent.get(event.id) ?? [],
     event_locations:
       locationsByEvent.get(event.id) ??

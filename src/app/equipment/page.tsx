@@ -2,6 +2,7 @@ import EquipmentList from "@/components/EquipmentList";
 import AddEquipmentPanel from "@/components/AddEquipmentPanel";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeStatus } from "@/lib/status";
 import type { Equipment } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -61,7 +62,7 @@ export default async function EquipmentPage() {
       category: item.category ?? "Uncategorised",
       subcategory: item.subcategory ?? "Equipment",
       current_condition: item.current_condition ?? "not_inspected",
-      status: item.status ?? "available",
+      status: normalizeStatus(item.status, "available"),
       location,
       rfid_tag: activeTag,
       is_tagged: Boolean(activeTag),

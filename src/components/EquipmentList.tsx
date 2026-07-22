@@ -7,11 +7,11 @@ import type { Equipment } from "@/types/database";
 const statusStyles: Record<string, string> = {
   available: "bg-emerald-100 text-emerald-700",
   reserved: "bg-blue-100 text-blue-700",
-  in_use: "bg-amber-100 text-amber-800",
-  checked_out: "bg-amber-100 text-amber-700",
+  "in use": "bg-amber-100 text-amber-800",
+  "checked out": "bg-amber-100 text-amber-700",
   deployed: "bg-blue-100 text-blue-700",
-  inspection_required: "bg-red-100 text-red-700",
-  under_maintenance: "bg-red-100 text-red-700",
+  "inspection required": "bg-red-100 text-red-700",
+  "under maintenance": "bg-red-100 text-red-700",
   retired: "bg-slate-200 text-slate-700",
 };
 
@@ -48,10 +48,10 @@ export default function EquipmentList({ equipment }: { equipment: Equipment[] })
     total: equipment.length,
     available: equipment.filter((item) => item.status === "available").length,
     reserved: equipment.filter((item) => item.status === "reserved").length,
-    in_use: equipment.filter((item) => ["in_use", "deployed", "checked_out"].includes(item.status)).length,
+    "in use": equipment.filter((item) => ["in use", "deployed", "checked out"].includes(item.status)).length,
     maintenance: equipment.filter((item) =>
       item.maintenance_state !== "normal" ||
-      ["inspection_required", "under_maintenance"].includes(item.status)
+      ["inspection required", "under maintenance"].includes(item.status)
     ).length,
   };
 

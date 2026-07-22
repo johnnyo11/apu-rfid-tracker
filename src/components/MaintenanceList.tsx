@@ -8,6 +8,7 @@ import type {
   EventFormOption,
   MaintenanceActivity,
 } from "@/types/database";
+import { EQUIPMENT_STATUS, MAINTENANCE_STATUS } from "@/lib/status";
 
 const label = (value: string) => value.replaceAll("_", " ");
 const formatDate = (value: string | null) =>
@@ -83,7 +84,7 @@ export default function MaintenanceList({
       .insert({
         equipment_id: equipmentId,
         issue_description: issueDescription,
-        status: "reported",
+        status: MAINTENANCE_STATUS.REPORTED,
         reported_at: new Date().toISOString(),
         notes: String(form.get("notes") ?? "").trim() || null,
       });
@@ -96,7 +97,7 @@ export default function MaintenanceList({
 
     const { error: equipmentError } = await supabase
       .from("equipment")
-      .update({ status: "under_maintenance" })
+      .update({ status: EQUIPMENT_STATUS.UNDER_MAINTENANCE })
       .eq("id", equipmentId);
 
     setSaving(false);
@@ -120,7 +121,7 @@ export default function MaintenanceList({
     const { error: logError } = await supabase
       .from("maintenance_logs")
       .update({
-        status: "resolved",
+        status: MAINTENANCE_STATUS.RESOLVED,
         serviced_at: item.serviced_at ?? resolvedAt,
         resolved_at: resolvedAt,
       })
@@ -135,7 +136,7 @@ export default function MaintenanceList({
     const { error: equipmentError } = await supabase
       .from("equipment")
       .update({
-        status: "available",
+        status: EQUIPMENT_STATUS.AVAILABLE,
         total_hours_used: 0,
       })
       .eq("id", item.equipment.id);

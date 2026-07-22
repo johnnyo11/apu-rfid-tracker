@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import StatusToast from "@/components/StatusToast";
+import { EQUIPMENT_STATUS } from "@/lib/status";
 import type { EventFormOption } from "@/types/database";
 
 type Message = { type: "success" | "error"; text: string };
@@ -101,7 +102,7 @@ export default function AddEquipmentPanel({
       invoice_number: text("invoice_number"),
       purchase_cost: costValue ? Number(costValue) : null,
       warranty_end_date: text("warranty_end_date"),
-      status: String(form.get("status") ?? "available"),
+      status: String(form.get("status") ?? EQUIPMENT_STATUS.AVAILABLE),
       location_id: locationValue ? Number(locationValue) : null,
       notes: text("notes"),
       total_hours_used: 0,
@@ -198,10 +199,10 @@ export default function AddEquipmentPanel({
             </label>
             <label className="text-sm font-medium text-slate-700">
               Operational status
-              <select name="status" defaultValue="available" className={fieldClass}>
-                <option value="available">Available</option>
-                <option value="under_maintenance">Under maintenance</option>
-                <option value="retired">Retired</option>
+              <select name="status" defaultValue={EQUIPMENT_STATUS.AVAILABLE} className={fieldClass}>
+                <option value={EQUIPMENT_STATUS.AVAILABLE}>Available</option>
+                <option value={EQUIPMENT_STATUS.UNDER_MAINTENANCE}>Under maintenance</option>
+                <option value={EQUIPMENT_STATUS.RETIRED}>Retired</option>
               </select>
             </label>
             <label className="text-sm font-medium text-slate-700">
