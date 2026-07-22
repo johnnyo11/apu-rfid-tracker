@@ -2,6 +2,11 @@
 
 Next.js and Supabase inventory management for APU's Audio-Visual team.
 
+## ESP32 Code
+The file that contains the code for the ESP32 module is in the 
+> hardware/esp32_rc522
+folder
+
 ## Stored status convention
 
 Status values are stored as lowercase words separated by spaces. Examples are
